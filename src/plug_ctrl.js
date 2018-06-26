@@ -32,12 +32,17 @@ export class PlugCtrl extends MetricsPanelCtrl {
         //_.defaultsDeep(this.panel, {});
         this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
         this.events.on('data-received', this.onDataReceived.bind(this));
+        this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
         //this.events.on("panel-size-changed", this.resizeAspectRatio.bind(this));
     }
 
     /*zoomOut(evt) {
         this.publishAppEvent('zoom-out', 2);
     }*/
+
+    onInitEditMode() {
+        this.addEditorTab('Config', 'public/plugins/plug/editor.html', 3);
+    }
 
     onDataReceived(dataList) {
         if (!inited) {
@@ -128,13 +133,13 @@ export class PlugCtrl extends MetricsPanelCtrl {
             };
             var ctx = document.getElementById("myChart");
             cht = new Chart(ctx, config);
-            _.defaultsDeep(this.panel, { config });
             inited = true;
         }
 
         if (dataList == undefined)
             return
 
+        console.log(dataList)
         seriesList = [];
         for (var i = 0; i < dataList[0].datapoints.length; i++) {
             seriesList.push(this.trasformData(dataList[0].datapoints[i]));
@@ -142,23 +147,16 @@ export class PlugCtrl extends MetricsPanelCtrl {
 
         var maxValueOfY = Math.max(...seriesList.map(o => o.y));
 
-        config.data.datasets[0].data = seriesList;
+        cht.data.datasets[0].data = seriesList;
+        cht.options.annotation.annotations = [];
+        hiddenAnnotations = [];
 
-
-        config.options.annotation.annotations.splice(0, config.options.annotation.annotations.length);
-
-        //config.data.datasets.push(this.addUDC("Attività 1", seriesList[0].x, seriesList[2].x, maxValueOfY, "rgba(255, 0, 0,0.3)"));
-        //config.data.datasets.push(this.addUDC("Attività 2", seriesList[2].x, seriesList[3].x, maxValueOfY, "rgba(204, 102, 0,0.3)"));
-        //config.data.datasets.push(this.addUDC("Attività 3", seriesList[5].x, seriesList[7].x, maxValueOfY, "rgba(204, 204, 0,0.3)"));
-
-
-        var annotations = this.addAnnotation(seriesList, maxValueOfY)
-        //config.options.annotation.annotations.push(annotations);
+        var annotations = this.addAnnotation(seriesList, maxValueOfY);
         hiddenAnnotations.push(annotations);
         config.options.annotation.annotations.push(annotations);
+
         this.addLegend();
         cht.update();
-
     }
 
     addLegend() {
@@ -226,6 +224,9 @@ export class PlugCtrl extends MetricsPanelCtrl {
     }
 
     addAnnotation(seriesList, maxValueOfY) {
+        if (maxValueOfY == 0)
+            maxValueOfY = 10;
+
         return {
             drawTime: "beforeDatasetsDraw",
             type: "box",
