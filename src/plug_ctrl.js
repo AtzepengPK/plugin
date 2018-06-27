@@ -3,8 +3,10 @@ import _ from 'lodash';
 import * as chart from "./chart";
 import "./charts-annotation";
 import './css/style.css!';
+import { DataProcessor } from './data-processor';
 
 const myConfig = {
+    annotationDSStartIndex: 1,
     legend: {
         containerId: "chart-legends",
         box: {
@@ -15,6 +17,91 @@ const myConfig = {
     },
     tooltip: {
         containerId: "chartjs-tooltip",
+    },
+    graphConfig: {
+        type: "line",
+        data: {
+            datasets: [{
+                type: 'line',
+                label: 'My First dataset',
+                borderColor: ["rgba(0, 153, 255,0.8)"],
+                backgroundColor: ["rgba(0, 153, 255,0.8)"],
+                data: [],
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            title: {
+                display: false,
+                text: 'Chart.js Line Chart'
+            },
+            legend: false,
+            legendCallback: function (chart) {
+                var legendHtml = [];
+                legendHtml.push('<div style="display:inline-block;padding-bottom:20px">');
+
+                for (var i = 0; i < chart.data.datasets.length; i++) {
+                    legendHtml.push('<div id="d' + i + '" class="' + myConfig.legend.box.containerClass + '">');
+                    legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.data.datasets[i].backgroundColor[i] + '"></div>');
+                    legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.data.datasets[i].label + '</div>');
+                    legendHtml.push('<div style="clear:both">');
+                    legendHtml.push('</div>');
+                    legendHtml.push('</div>');
+                }
+                for (var i = 0; i < chart.options.annotation.annotations.length; i++) {
+                    legendHtml.push('<div id="a' + i + '" class="' + myConfig.legend.box.containerClass + '" style="float:left;">')
+                    legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.options.annotation.annotations[i].backgroundColor[i] + '"></div>');
+                    legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.options.annotation.annotations[i].label + '</div>');
+                    legendHtml.push('<div style="clear:both">');
+                    legendHtml.push('</div>');
+                    legendHtml.push('</div>')
+                }
+                legendHtml.push('</div>');
+                legendHtml.push('<div style="clear:both"></div>');
+
+                return legendHtml.join("");
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function (tooltipItem, data) {
+                        var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].description || '';
+
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += Math.round(tooltipItem.yLabel * 100) / 100;
+                        return label;
+                    }
+                }
+            },
+            scales: {
+                xAxes: [{
+                    display: true,
+                    type: 'time',
+                    categoryPercentage: 1.0,
+                    barPercentage: 1.0
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Value'
+                    },
+                    ticks: {
+                        suggestedMin: 0
+                    }
+                }]
+            },
+            annotation: {
+                events: ["mousemove", "mouseleave"],
+                annotations: [
+                ]
+            }
+        }
     }
 }
 
@@ -23,13 +110,20 @@ let hiddenAnnotations = [];
 var cht;
 var config;
 let inited = false;
+let dataProcessor = new DataProcessor();
 
 export class PlugCtrl extends MetricsPanelCtrl {
 
     constructor($scope, $injector) {
         super($scope, $injector);
 
+        _.defaultsDeep(this.panel, myConfig);
+        _.defaultsDeep(this.panel.legend, myConfig.legend);
+        _.defaultsDeep(this.panel.tooltip, myConfig.tooltip);
+        _.defaultsDeep(this.panel.graphConfig, myConfig.graphConfig);
+
         //_.defaultsDeep(this.panel, {});
+        this.events.on('render', this.onRender.bind(this));
         this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
         this.events.on('data-received', this.onDataReceived.bind(this));
         this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
@@ -46,104 +140,24 @@ export class PlugCtrl extends MetricsPanelCtrl {
 
     onDataReceived(dataList) {
         if (!inited) {
-            config = {
-                type: "line",
-                data: {
-                    datasets: [{
-                        type: 'line',
-                        label: 'My First dataset',
-                        borderColor: ["rgba(0, 153, 255,0.8)"],
-                        backgroundColor: ["rgba(0, 153, 255,0.8)"],
-                        data: [],
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    title: {
-                        display: false,
-                        text: 'Chart.js Line Chart'
-                    },
-                    legend: false,
-                    legendCallback: function (chart) {
-                        var legendHtml = [];
-                        legendHtml.push('<div style="display:inline-block;padding-bottom:20px">');
-
-                        for (var i = 0; i < chart.data.datasets.length; i++) {
-                            legendHtml.push('<div id="d' + i + '" class="' + myConfig.legend.box.containerClass + '">');
-                            legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.data.datasets[i].backgroundColor[i] + '"></div>');
-                            legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.data.datasets[i].label + '</div>');
-                            legendHtml.push('<div style="clear:both">');
-                            legendHtml.push('</div>');
-                            legendHtml.push('</div>');
-                        }
-                        for (var i = 0; i < chart.options.annotation.annotations.length; i++) {
-                            legendHtml.push('<div id="a' + i + '" class="' + myConfig.legend.box.containerClass + '" style="float:left;">')
-                            legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.options.annotation.annotations[i].backgroundColor[i] + '"></div>');
-                            legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.options.annotation.annotations[i].label + '</div>');
-                            legendHtml.push('<div style="clear:both">');
-                            legendHtml.push('</div>');
-                            legendHtml.push('</div>')
-                        }
-                        legendHtml.push('</div>');
-                        legendHtml.push('<div style="clear:both"></div>');
-
-                        return legendHtml.join("");
-                    },
-                    tooltips: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: function (tooltipItem, data) {
-                                var label = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].description || '';
-
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += Math.round(tooltipItem.yLabel * 100) / 100;
-                                return label;
-                            }
-                        }
-                    },
-                    scales: {
-                        xAxes: [{
-                            display: true,
-                            type: 'time',
-                            categoryPercentage: 1.0,
-                            barPercentage: 1.0
-                        }],
-                        yAxes: [{
-                            display: true,
-                            scaleLabel: {
-                                display: true,
-                                labelString: 'Value'
-                            },
-                            ticks: {
-                                suggestedMin: 0
-                            }
-                        }]
-                    },
-                    annotation: {
-                        events: ["mousemove", "mouseleave"],
-                        annotations: [
-                        ]
-                    }
-                }
-            };
             var ctx = document.getElementById("myChart");
-            cht = new Chart(ctx, config);
+            cht = new Chart(ctx, this.panel.graphConfig);
             inited = true;
         }
 
         if (dataList == undefined)
             return
 
-        console.log(dataList)
-        seriesList = [];
-        for (var i = 0; i < dataList[0].datapoints.length; i++) {
-            seriesList.push(this.trasformData(dataList[0].datapoints[i]));
-        }
+        console.log(dataList);
+        var annotations = dataProcessor.transformData("annotation", dataList);
+        console.log(annotations);
+
+        //this.render(dataList);
+    }
+
+    onRender(seriesList) {
+        if (seriesList == undefined)
+            return
 
         var maxValueOfY = Math.max(...seriesList.map(o => o.y));
 
@@ -153,7 +167,7 @@ export class PlugCtrl extends MetricsPanelCtrl {
 
         var annotations = this.addAnnotation(seriesList, maxValueOfY);
         hiddenAnnotations.push(annotations);
-        config.options.annotation.annotations.push(annotations);
+        cht.options.annotation.annotations.push(annotations);
 
         this.addLegend();
         cht.update();
@@ -220,7 +234,6 @@ export class PlugCtrl extends MetricsPanelCtrl {
             }
         }
         cht.update();
-
     }
 
     addAnnotation(seriesList, maxValueOfY) {
@@ -272,16 +285,6 @@ export class PlugCtrl extends MetricsPanelCtrl {
             }
         }
     }
-
-    trasformData(dataList) {
-        return {
-            x: new Date(dataList[1]),
-            y: dataList[0],
-            description: "AHAHAH",
-            xTimestamp: dataList[1]
-        };
-    }
-
 }
 
 PlugCtrl.templateUrl = "module.html"
