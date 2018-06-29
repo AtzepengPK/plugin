@@ -3,20 +3,29 @@ import { DataProcessorBar } from './data-processor-bar';
 import { DataProcessorAnnotation } from './data-processor-annotation';
 
 export class DataProcessor {
-    constructor() { }
+    constructor(panel) {
+        this.panel = panel;
+        this.maxY = 0;
+    }
 
     transformData(type, dataSet) {
-        console.log(type);
-        console.log(dataSet);
+
         switch (type) {
             default:
             case "line":
-                return new DataProcessorLine(dataSet).transform();
+                var dataProcessorLine = new DataProcessorLine(dataSet);
+                var data = dataProcessorLine.transform();
+                this.maxY = dataProcessorLine.getMaxY();
+                return data;
             case "bar":
                 return new DataProcessorBar(dataSet).transform();
             case "annotation":
-                return new DataProcessorAnnotation(dataSet).transform();
+                return new DataProcessorAnnotation(dataSet, this.panel).transform();
         }
+    }
+
+    getMaxY() {
+        return this.maxY;
     }
 }
 

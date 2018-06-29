@@ -1,0 +1,12 @@
+<div class="editor-row">
+    <div class="section gf-form-group">
+        <h5 class="section-heading">General</h5>
+        <gf-form-switch class="gf-form" label="Enable Annotations" label-class="width-11" checked="ctrl.panel.annotations.enabled"
+            on-change="ctrl.refreshData()"></gf-form-switch>
+        <div class="gf-form" ng-show="ctrl.panel.annotations.enabled">
+            <span class="gf-form-label width-18">Dataset start index (starts from 0)</span>
+            <input type="number" class="gf-form-input width-4" ng-model="ctrl.panel.annotations.annotationDSStartIndex" ng-change="ctrl.refreshData()"
+                ng-model-onblur placeholder="1">
+        </div>
+    </div>
+</div>

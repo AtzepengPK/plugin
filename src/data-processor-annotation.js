@@ -1,33 +1,51 @@
 export class DataProcessorAnnotation {
-    constructor(dataset) {
+    constructor(dataset,panel) {
+        this.panel = panel;
         this.dataset = dataset;
-        this.annotationStructure = {
+    }
+
+    transform() {
+        var annotations = [];
+        for (var i = 0; i < this.dataset.datapoints.length; i++) {
+            annotations.push(
+                this.buildAnnotation(this.dataset.datapoints[i], i, this.dataset.maxValueOfY)
+            );
+        }
+        return annotations;
+    }
+
+    buildAnnotation(datapoint, index, maxY) {
+
+        var maxDate = new Date(datapoint["@timestamp"][0]);
+        maxDate.setHours(maxDate.getHours() + 1);
+
+        return {
             drawTime: "beforeDatasetsDraw",
             type: "box",
-            id: '0',
-            position: '0',
+            id: index.toString(),
+            position: index,
             xScaleID: "x-axis-0",
             yScaleID: "y-axis-0",
-            xMin: 0,
-            xMax: 0,
+            xMin: new Date(datapoint["@timestamp"][0]),
+            xMax: maxDate,
             yMin: 0,
-            yMax: 0,
-            label: "default",
+            yMax: maxY,
+            label: datapoint.UDC_code,
             backgroundColor: ["rgba(101, 33, 171, 0.5)"],
             borderColor: ["rgb(101, 33, 171)"],
             borderWidth: 1,
             onMousemove: function (e) {
-                var tooltipEl = document.getElementById(myConfig.tooltip.containerId);
+                var tooltipEl = document.getElementById(this.panel.tooltip.containerId);
 
                 if (!tooltipEl) {
                     tooltipEl = document.createElement('div');
-                    tooltipEl.id = myConfig.tooltip.containerId;
+                    tooltipEl.id = this.panel.tooltip.containerId;
                     tooltipEl.innerHTML = "<div style='background-color:red'></div>";
                     document.body.appendChild(tooltipEl);
                 }
 
                 var divRoot = tooltipEl.querySelector('div');
-                divRoot.innerHTML = seriesList[1].description;
+                divRoot.innerHTML = "CIAOO";
 
                 var xPos = e.clientX;
                 var yPos = e.clientY;
@@ -45,25 +63,5 @@ export class DataProcessorAnnotation {
                 tooltip.parentNode.removeChild(tooltip);
             }
         }
-    }
-
-    transform() {
-        console.log(this.dataset);
-        var annotations = [];
-        for (var i = 0; i < this.dataset.length; i++) {
-            annotations.push(
-                this.buildAnnotation(this.dataset[i].datapoints)
-            );
-        }
-        return annotations;
-    }
-
-    buildAnnotation(datapoints) {
-        var data = []
-        for (var i = 0; i < datapoints.length; i++) {
-            console.log(datapoints[i])
-            data.push(this.annotationStructure);
-        }
-        return data;
     }
 }

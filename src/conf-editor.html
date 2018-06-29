@@ -1,0 +1,11 @@
+<div class="editor-row">
+    <div class="section gf-form-group">
+        <h5 class="section-heading">General</h5>
+        <div class="gf-form">
+            <span class="gf-form-label width-11">Type</span>
+            <div class="gf-form-select-wrapper width-9">
+                <select class="gf-form-input" ng-model="ctrl.panel.type" ng-options="t for t in ['line', 'bar']" ng-change="ctrl.refreshData()"> </select>
+            </div>
+        </div>
+    </div>
+</div>
