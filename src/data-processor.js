@@ -6,6 +6,11 @@ export class DataProcessor {
     constructor(panel) {
         this.panel = panel;
         this.maxY = 0;
+
+        this.dataProcessorLine = new DataProcessorLine();
+        this.dataProcessorBar = new DataProcessorBar();
+        this.dataProcessorAnnotation = new DataProcessorAnnotation();
+
     }
 
     transformData(type, dataSet) {
@@ -13,14 +18,13 @@ export class DataProcessor {
         switch (type) {
             default:
             case "line":
-                var dataProcessorLine = new DataProcessorLine(dataSet);
-                var data = dataProcessorLine.transform();
-                this.maxY = dataProcessorLine.getMaxY();
+                var data = this.dataProcessorLine.transform(dataSet);
+                this.maxY = this.dataProcessorLine.getMaxY();
                 return data;
             case "bar":
-                return new DataProcessorBar(dataSet).transform();
+                return this.dataProcessorBar.transform(dataSet);
             case "annotation":
-                return new DataProcessorAnnotation(dataSet, this.panel).transform();
+                return this.dataProcessorAnnotation.transform(dataSet);
         }
     }
 

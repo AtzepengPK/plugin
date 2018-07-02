@@ -8,4 +8,26 @@
             </div>
         </div>
     </div>
+    <div class="section gf-form-group">
+        <h5 class="section-heading">Line</h5>
+        <!--div class="gf-form">
+            <span class="gf-form-label width-11">Type</span>
+            <div class="gf-form-select-wrapper width-9">
+                <select class="gf-form-input" ng-model="ctrl.panel.type" ng-options="t for t in ['line', 'bar']" ng-change="ctrl.refreshData()"> </select>
+            </div>
+        </div-->
+    </div>
+    <div class="section gf-form-group">
+        <h5 class="section-heading">Bar</h5>
+        <div class="gf-form">
+            <span class="gf-form-label width-11">Category Percentage</span>
+            <input type="number" class="gf-form-input width-9" ng-model="ctrl.panel.axes.xAxes.categoryPercentage" ng-change="ctrl.changeProperty('cp')"
+                ng-model-onblur placeholder="1.0">
+        </div>
+        <div class="gf-form">
+            <span class="gf-form-label width-11">Bar Percentage</span>
+            <input type="number" class="gf-form-input width-9" ng-model="ctrl.panel.axes.xAxes.barPercentage" ng-change="ctrl.changeProperty('bp')"
+                ng-model-onblur placeholder="1.0">
+        </div>
+    </div>
 </div>

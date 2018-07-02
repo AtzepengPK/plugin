@@ -14,6 +14,7 @@ var myConfig = {
         enabled: false,
         annotationDSStartIndex: 1
     },
+    test: "",
     legend: {
         containerId: "chart-legends",
         box: {
@@ -24,13 +25,15 @@ var myConfig = {
     },
     tooltip: {
         containerId: "chartjs-tooltip",
-        mode: "index",
+        mode: "nearest",
         intersect: false,
     },
     axes: {
         xAxes: {
             display: true,
-            type: "time"
+            type: "time",
+            categoryPercentage: 1.0,
+            barPercentage: 1.0
         },
         yAxes: {
             display: true,
@@ -69,6 +72,11 @@ export class PlugCtrl extends MetricsPanelCtrl {
     onInitEditMode() {
         this.addEditorTab('Config', 'public/plugins/plug/conf-editor.html', 3);
         this.addEditorTab('Annotations', 'public/plugins/plug/annotation-editor.html', 4);
+        this.addEditorTab('Overrides', 'public/plugins/plug/overrides-editor.html', 5);
+    }
+
+    display() {
+        console.log(this.panel.test)
     }
 
     onDataReceived(dataList) {
@@ -79,7 +87,7 @@ export class PlugCtrl extends MetricsPanelCtrl {
         if (dataList == undefined)
             return
 
-        currentData = dataList;
+        currentData = dataList.slice();
         this.refreshData(dataList);
 
         /*this.panel.data.datasets.push(
@@ -106,7 +114,7 @@ export class PlugCtrl extends MetricsPanelCtrl {
         var ctx = document.getElementById("myChart");
 
         var options = {
-            type: this.panel.type,
+            type: "bar",
             data: this.panel.data,
             options: {
                 responsive: true,
@@ -117,17 +125,17 @@ export class PlugCtrl extends MetricsPanelCtrl {
                     legendHtml.push('<div style="display:inline-block;padding-bottom:20px">');
 
                     for (var i = 0; i < chart.data.datasets.length; i++) {
-                        legendHtml.push('<div id="d' + i + '" class="' + this.panel.legend.box.containerClass + '">');
-                        legendHtml.push('<div class="' + this.panel.legend.box.coloredBoxClass + '" style="background-color:' + chart.data.datasets[i].backgroundColor[i] + '"></div>');
-                        legendHtml.push('<div class="' + this.panel.legend.box.labelClass + '">' + chart.data.datasets[i].label + '</div>');
+                        legendHtml.push('<div id="d' + i + '" class="' + myConfig.legend.box.containerClass + '">');
+                        legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.data.datasets[i].backgroundColor + '"></div>');
+                        legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.data.datasets[i].label + '</div>');
                         legendHtml.push('<div style="clear:both">');
                         legendHtml.push('</div>');
                         legendHtml.push('</div>');
                     }
                     for (var i = 0; i < chart.options.annotation.annotations.length; i++) {
-                        legendHtml.push('<div id="a' + i + '" class="' + this.panel.legend.box.containerClass + '" style="float:left;">')
-                        legendHtml.push('<div class="' + this.panel.legend.box.coloredBoxClass + '" style="background-color:' + chart.options.annotation.annotations[i].backgroundColor[i] + '"></div>');
-                        legendHtml.push('<div class="' + this.panel.legend.box.labelClass + '">' + chart.options.annotation.annotations[i].label + '</div>');
+                        legendHtml.push('<div id="a' + i + '" class="' + myConfig.legend.box.containerClass + '" style="float:left;">')
+                        legendHtml.push('<div class="' + myConfig.legend.box.coloredBoxClass + '" style="background-color:' + chart.options.annotation.annotations[i].backgroundColor + '"></div>');
+                        legendHtml.push('<div class="' + myConfig.legend.box.labelClass + '">' + chart.options.annotation.annotations[i].label + '</div>');
                         legendHtml.push('<div style="clear:both">');
                         legendHtml.push('</div>');
                         legendHtml.push('</div>')
@@ -156,8 +164,8 @@ export class PlugCtrl extends MetricsPanelCtrl {
                     xAxes: [{
                         display: this.panel.axes.xAxes.display,
                         type: this.panel.axes.xAxes.type,
-                        categoryPercentage: 1.0,
-                        barPercentage: 1.0
+                        categoryPercentage: this.panel.axes.xAxes.categoryPercentage,
+                        barPercentage: this.panel.axes.xAxes.barPercentage
                     }],
                     yAxes: [{
                         display: this.panel.axes.yAxes.display,
@@ -183,7 +191,6 @@ export class PlugCtrl extends MetricsPanelCtrl {
     }
 
     refreshData(data) {
-        console.log("refresh data");
         if (data == undefined)
             data = currentData.slice();
 
@@ -195,21 +202,25 @@ export class PlugCtrl extends MetricsPanelCtrl {
         }
 
         this.panel.data.datasets = [];
+        cht.options.annotation.annotations = [];
+        hiddenAnnotations = [];
 
         for (var i = 0; i < graphData.length; i++) {
             this.panel.data.datasets.push(
                 dataProcessor.transformData(this.panel.type, graphData[i])
             )
         }
-        var maxY = dataProcessor.getMaxY();
 
-        for (var i = 0; i < annotationData.length; i++) {
-            annotationData[i].maxValueOfY = maxY;
-            cht.options.annotation.annotations = cht.options.annotation.annotations.concat(dataProcessor.transformData("annotation", annotationData[i]));
-            cht.options.annotation.annotations.shift();
+        var maxY = dataProcessor.getMaxY();
+        if (this.panel.annotations.enabled) {
+            for (var i = 0; i < annotationData.length; i++) {
+                annotationData[i].maxValueOfY = maxY;
+                cht.options.annotation.annotations = cht.options.annotation.annotations.concat(dataProcessor.transformData("annotation", annotationData[i]));
+            }
+            hiddenAnnotations = cht.options.annotation.annotations.slice();
         }
 
-        console.log(cht.options.annotation)
+        this.addLegend();
 
         cht.update();
     }
@@ -217,6 +228,25 @@ export class PlugCtrl extends MetricsPanelCtrl {
     onRender(seriesList) {
         if (cht)
             cht.update();
+
+        console.log(this.panel.axes.xAxes.barPercentage)
+        console.log(this.panel.axes.xAxes.categoryPercentage)
+        console.log(cht.options.scales.xAxes[0].barPercentage)
+        console.log(cht.options.scales.xAxes[0].categoryPercentage)
+        console.log(cht)
+    }
+
+    changeProperty(property) {
+        switch (property) {
+            case 'cp':
+                cht.options.scales.xAxes[0].categoryPercentage = this.panel.axes.xAxes.categoryPercentage;
+                this.render();
+                break;
+            case 'bp':
+                cht.options.scales.xAxes[0].barPercentage = this.panel.axes.xAxes.barPercentage;
+                this.render();
+                break;
+        }
     }
 
     addLegend() {
@@ -252,13 +282,14 @@ export class PlugCtrl extends MetricsPanelCtrl {
 
     legendClickCallback(event) {
         var target = event.target || event.srcElement;
-        if (!target.classList.contains(this.panel.legend.box.containerClass)) {
+        if (!target.classList.contains(myConfig.legend.box.containerClass)) {
             target = target.parentNode;
         }
 
-        var label = target.getElementsByClassName(this.panel.legend.box.labelClass)[0];
+        var label = target.getElementsByClassName(myConfig.legend.box.labelClass)[0];
         var id = target.getAttribute('id');
         var index = id.substring(1, id.length);
+
         if (id[0] == 'd') {
             var meta = cht.getDatasetMeta(index);
             if (meta.hidden === null) {
@@ -270,12 +301,14 @@ export class PlugCtrl extends MetricsPanelCtrl {
             }
         } else {
             var hAnnotation = hiddenAnnotations[index];
-            var annotation = this.panel.options.annotation.annotations.find(a => a.position === hAnnotation.position);
+            var annotation = cht.options.annotation.annotations.find(a => a.position == hAnnotation.position);
             if (!annotation) {
-                this.panel.options.annotation.annotations.push(hAnnotation);
+                cht.options.annotation.annotations.push(hAnnotation);
                 label.classList.remove('hidden');
             } else {
-                this.panel.options.annotation.annotations.splice([annotation.position], 1);
+                var difference = hiddenAnnotations.length - cht.options.annotation.annotations;
+                cht.options.annotation.annotations.sort((a, b) => a.position - b.position);
+                cht.options.annotation.annotations.splice((annotation.position - difference), 1);
                 label.classList.add('hidden');
             }
         }

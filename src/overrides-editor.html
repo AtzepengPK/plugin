@@ -1,0 +1,20 @@
+<div class="editor-row">
+    <div class="section gf-form-group">
+        <h5 class="section-heading">Graphs</h5>
+        <div class="gf-form">
+            <div class="gf-form-select-wrapper width-9">
+                <select class="gf-form-input" ng-model="ctrl.panel.test" ng-options="t.label for t in ctrl.panel.data.datasets" ng-change="ctrl.display()"> </select>
+            </div>
+            <div class="gf-form-select-wrapper width-9">
+                <select class="gf-form-input" ng-options="ctrl.panel.test" ng-change="ctrl.display()"> </select>
+            </div>
+        </div>
+        <h5 class="section-heading">Annotations</h5>
+        <div class="gf-form">
+            <div class="gf-form-select-wrapper width-9">
+                <select class="gf-form-input" ng-model="ctrl.panel.test" ng-options="t.label for t in ctrl.cht.options.annotation.annotations"
+                    ng-change="ctrl.display()"> </select>
+            </div>
+        </div>
+    </div>
+</div>

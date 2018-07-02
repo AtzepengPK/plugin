@@ -1,37 +1,33 @@
 export class DataProcessorLine {
 
-    constructor(dataset) {
-        this.dataset = dataset;
-        this.lineStructure = {
+    constructor() {
+        this.maxY = 0;
+    }
+
+    randomRgba() {
+        var o = Math.round, r = Math.random, s = 255;
+        return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ', 0.4)';
+    }
+
+    transform(dataset) {
+        var color = this.randomRgba();
+
+        var lineStructure = {
             type: 'line',
-            label: "noAlias",
-            borderColor: ["rgba(0, 153, 255,0.8)"],
-            backgroundColor: ["rgba(0, 153, 255,0.8)"],
+            label: dataset.target || "noAlias",
+            borderColor: [color],
+            backgroundColor: [color],
             data: [],
             fill: false
         }
-        this.maxY = 0;
-        /*{
-            type: 'line',
-            label: 'My First dataset',
-            borderColor: ["rgba(0, 153, 255,0.8)"],
-            backgroundColor: ["rgba(0, 153, 255,0.8)"],
-            data: [],
-            fill: false
-        }*/
-    }
 
-    transform() {
-        this.lineStructure.label = this.dataset.target || "noAlias";
-        this.lineStructure.data = [];
-
-        for (var i = 0; i < this.dataset.datapoints.length; i++) {
-            this.lineStructure.data.push(
-                this.buildLine(this.dataset.datapoints[i])
+        for (var i = 0; i < dataset.datapoints.length; i++) {
+            lineStructure.data.push(
+                this.buildLine(dataset.datapoints[i])
             );
         }
 
-        return this.lineStructure;
+        return lineStructure;
     }
 
     buildLine(datapoints) {
@@ -45,8 +41,6 @@ export class DataProcessorLine {
     }
 
     getMaxY() {
-        console.log("asd")
-        console.log(this.maxY)
         return this.maxY;
     }
 

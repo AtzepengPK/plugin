@@ -1,23 +1,36 @@
 export class DataProcessorAnnotation {
-    constructor(dataset,panel) {
-        this.panel = panel;
-        this.dataset = dataset;
+    constructor() {
     }
 
-    transform() {
+    randomRgba() {
+        var o = Math.round, r = Math.random, s = 255;
+        return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ', 0.4)';
+    }
+
+    transform(dataset) {
         var annotations = [];
-        for (var i = 0; i < this.dataset.datapoints.length; i++) {
+
+        /*var offset = (new Date().getTimezoneOffset() * 60 * 1000);
+        var timeRange = angular.element('grafana-app').injector().get('timeSrv').timeRange();
+        var temp_date_from = new Date(timeRange.from + offset);
+        var temp_date_to = new Date(timeRange.to + offset);
+        var date_from = temp_date_from.getFullYear() + '-' + ('0' + (temp_date_from.getMonth() + 1)).slice(-2) + '-' + ('0' + temp_date_from.getDate()).slice(-2) + 'T' + ('0' + temp_date_from.getHours()).slice(-2) + ':' + ('0' + temp_date_from.getMinutes()).slice(-2) + ':' + ('0' + temp_date_from.getSeconds()).slice(-2) + '.000Z';
+        var date_to = temp_date_to.getFullYear() + '-' + ('0' + (temp_date_to.getMonth() + 1)).slice(-2) + '-' + ('0' + temp_date_to.getDate()).slice(-2) + 'T' + ('0' + temp_date_to.getHours()).slice(-2) + ':' + ('0' + temp_date_to.getMinutes()).slice(-2) + ':' + ('0' + temp_date_to.getSeconds()).slice(-2) + '.000Z';
+*/
+        for (var i = 0; i < dataset.datapoints.length; i++) {
+
             annotations.push(
-                this.buildAnnotation(this.dataset.datapoints[i], i, this.dataset.maxValueOfY)
+                this.buildAnnotation(dataset.datapoints[i], i, dataset.maxValueOfY)
             );
         }
         return annotations;
     }
 
     buildAnnotation(datapoint, index, maxY) {
-
         var maxDate = new Date(datapoint["@timestamp"][0]);
         maxDate.setHours(maxDate.getHours() + 1);
+        var color = this.randomRgba();
+
 
         return {
             drawTime: "beforeDatasetsDraw",
@@ -31,15 +44,15 @@ export class DataProcessorAnnotation {
             yMin: 0,
             yMax: maxY,
             label: datapoint.UDC_code,
-            backgroundColor: ["rgba(101, 33, 171, 0.5)"],
-            borderColor: ["rgb(101, 33, 171)"],
+            backgroundColor: color,
+            borderColor: color,
             borderWidth: 1,
             onMousemove: function (e) {
-                var tooltipEl = document.getElementById(this.panel.tooltip.containerId);
+                var tooltipEl = document.getElementById('chartjs-tooltip');
 
                 if (!tooltipEl) {
                     tooltipEl = document.createElement('div');
-                    tooltipEl.id = this.panel.tooltip.containerId;
+                    tooltipEl.id = "chartjs-tooltip";
                     tooltipEl.innerHTML = "<div style='background-color:red'></div>";
                     document.body.appendChild(tooltipEl);
                 }
